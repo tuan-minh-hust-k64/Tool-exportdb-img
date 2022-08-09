@@ -2,6 +2,8 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const http = require('https'); // or 'https' for https:// URLs
 const fs = require('fs');
+var AdmZip = require("adm-zip");
+const fs_extra = require('fs-extra');
 
 const isImgLink = (url) => {
     if (typeof url !== 'string') {
@@ -44,7 +46,6 @@ const findImg = (data) => {
 }
 let anh = 0;
 const saveImg = (url, filename) => {
-    console.log(url)
     const file = fs.createWriteStream(filename);
     const request = http.get(url, function(response) {
        response.pipe(file);
@@ -56,7 +57,16 @@ const saveImg = (url, filename) => {
     });
 }
 
-
+const compressFileZip = () => {
+    try{
+        let zip = new AdmZip();
+        zip.addLocalFolder(path.join(__dirname, "../img"))
+        zip.writeZip(`img-${Math.random()}.zip`);
+        fs_extra.removeSync(path.join(__dirname, "../img"))
+    }catch (e){
+        console.log(e.message);
+    }
+}
 let db = new sqlite3.Database(path.resolve (__dirname, 'new_data.db'), sqlite3.OPEN_READONLY, (err) => { 
     if (err) { 
         console.log('Error when creating the database', err) 
@@ -70,6 +80,16 @@ db.all("SELECT * FROM Card", [], function(err, rows) {
         console.log('Error when get data');
     }
     console.log('alo')
+    try{
+        if(fs.existsSync(path.join(__dirname, '../img'))){
+            fs_extra.removeSync(path.join(__dirname, '../img'))
+            fs.mkdirSync(path.join(__dirname, '../img'))
+        }else{
+            fs.mkdirSync(path.join(__dirname, '../img'))
+        }
+    }catch(err){
+        console.log(err.message)
+    }
     rows.forEach(row => {
         const imgs1 = findImg(JSON.parse(row.question));
         const imgs2 = findImg(JSON.parse(row.answer));
@@ -86,17 +106,20 @@ db.all("SELECT * FROM Card", [], function(err, rows) {
                 if(item.includes('?')) {
                     url = item.split('?')[0]
                 }
-                saveImg(url, `E:\\WorkSpace\\Tool\\export-zip-img\\img\\${name}`)
+                saveImg(url, path.join(__dirname, `../img/${name}`))
             })
         }
     })
-    console.log(anh)
+
 })
 
-
+setTimeout(() => {
+    compressFileZip();
+}, 7000)
 db.close((err) => { 
     if(err) {
         console.log('Error when closing the database')
     }
 });
 
+//ok

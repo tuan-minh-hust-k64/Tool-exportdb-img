@@ -4,8 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
+    "adm-zip": "^0.5.9",
     "axios": "^0.27.2",
     "file-saver": "^2.0.5",
+    "fs-extra": "^10.1.0",
     "js-file-download": "^0.4.12",
     "sqlite3": "^5.0.11"
   },
